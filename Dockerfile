@@ -1,17 +1,13 @@
-# Use Eclipse Temurin JDK base image (lightweight Java 17)
-FROM eclipse-temurin:17-jdk-jammy
-
-# Create app directory
+# Stage 1: Build the Spring Boot app with Maven
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copy Maven wrapper and project files
-COPY . /app
+# Stage 2: Run the app with JDK 21
+FROM eclipse-temurin:21-jdk
+WORKDIR /app
+COPY --from=builder /app/target/DropTrail-0.0.1-SNAPSHOT.jar app.jar
 
-# Build the Spring Boot app using Maven
-RUN ./mvnw clean package -DskipTests
-
-# Expose the default port
 EXPOSE 8080
-
-# Run the Spring Boot JAR
-CMD ["java", "-jar", "target/droptrail-0.0.1-SNAPSHOT.jar"]
+CMD ["java", "-jar", "app.jar"]
